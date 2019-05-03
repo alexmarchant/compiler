@@ -1,11 +1,11 @@
 package main
 
 import (
-	"fmt"
 	"io/ioutil"
 	"os"
 	"github.com/alexmarchant/compiler/lexer"
 	"github.com/alexmarchant/compiler/parser"
+	"github.com/sanity-io/litter"
 )
 
 func main() {
@@ -21,11 +21,11 @@ func main() {
 
 	source := string(dat)
 	tokens := lexer.Lex(source)
-	fmt.Printf("%+v\n", tokens)
+	litter.Dump(tokens)
 
 	ast, err := parser.Parse(tokens)
 	if err != nil {
 		panic(err)
 	}
-	fmt.Printf("%+v\n", ast)
+	litter.Dump(ast)
 }
