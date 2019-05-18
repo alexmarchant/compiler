@@ -3,8 +3,11 @@ package main
 import (
 	"io/ioutil"
 	"os"
+	"fmt"
+
 	"github.com/alexmarchant/compiler/lexer"
 	"github.com/alexmarchant/compiler/parser"
+	"github.com/alexmarchant/compiler/generator"
 	"github.com/sanity-io/litter"
 )
 
@@ -21,11 +24,14 @@ func main() {
 
 	source := string(dat)
 	tokens := lexer.Lex(source)
-	litter.Dump(tokens)
+	// litter.Dump(tokens)
 
-	ast, err := parser.Parse(tokens)
+	program, err := parser.Parse(tokens)
 	if err != nil {
 		panic(err)
 	}
-	litter.Dump(ast)
+	litter.Dump(program)
+
+	ir := generator.Generate(program)
+	fmt.Print(ir)
 }

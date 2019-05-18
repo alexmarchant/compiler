@@ -4,15 +4,15 @@ import "github.com/alexmarchant/compiler/lexer"
 
 // Program is a whole program
 type Program struct {
-	MainFunction Function
+	MainFunction *Function
 }
 
-func parseProgram(tokens []lexer.Token) (Program, error) {
+func parseProgram(tokens *[]lexer.Token) (*Program, error) {
 	program := Program{}
 	function, err := parseFunction(tokens)
 	if err != nil {
-		return program, err
+		return nil, err
 	}
 	program.MainFunction = function
-	return program, nil
+	return &program, nil
 }

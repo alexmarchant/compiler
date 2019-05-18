@@ -6,20 +6,21 @@ import (
 )
 
 // TokenType is an enum
-type TokenType int
+type TokenType string
 
 // KeywordFun et all are TokenTypes
 const (
-	KeywordFunc TokenType = iota
-	KeywordReturn
-	Identifier
-	IntegerLiteral
-	OpeningParenthesis
-	ClosingParenthesis
-	OpeningCurlyBrace
-	ClosingCurlyBrace
-	LineBreak
-	PlusSign
+	KeywordFunc       TokenType = "KeywordFunc"
+	KeywordReturn     TokenType = "KeywordReturn"
+	KeywordInt        TokenType = "KeywordInt"
+	Identifier        TokenType = "Identifier"
+	IntegerLiteral    TokenType = "IntegerLiteral"
+	OpeningParen      TokenType = "OpeningParen"
+	ClosingParen      TokenType = "ClosingParen"
+	OpeningCurlyBrace TokenType = "OpeningCurlyBrace"
+	ClosingCurlyBrace TokenType = "ClosingCurlyBrace"
+	LineBreak         TokenType = "LineBreak"
+	PlusSign          TokenType = "PlusSign"
 )
 
 func (t TokenType) tokenTypeRegex() string {
@@ -28,13 +29,15 @@ func (t TokenType) tokenTypeRegex() string {
 		return "^func"
 	case KeywordReturn:
 		return "^return"
+	case KeywordInt:
+		return "^int"
 	case Identifier:
 		return "^[a-zA-Z]+"
 	case IntegerLiteral:
 		return "^\\d+"
-	case OpeningParenthesis:
+	case OpeningParen:
 		return "^\\("
-	case ClosingParenthesis:
+	case ClosingParen:
 		return "^\\)"
 	case OpeningCurlyBrace:
 		return "^{"
@@ -51,8 +54,8 @@ func (t TokenType) tokenTypeRegex() string {
 
 // Token is a token
 type Token struct {
-	TokenType TokenType
-	Source    string
+	Type   TokenType
+	Source string
 }
 
 func match(regexString string, source string) (bool, []int) {
@@ -72,8 +75,9 @@ func parseTokens(source string) []Token {
 	tokenTypes := []TokenType{
 		KeywordFunc,
 		KeywordReturn,
-		OpeningParenthesis,
-		ClosingParenthesis,
+		KeywordInt,
+		OpeningParen,
+		ClosingParen,
 		OpeningCurlyBrace,
 		ClosingCurlyBrace,
 		LineBreak,
@@ -90,8 +94,8 @@ func parseTokens(source string) []Token {
 			regex := tokenType.tokenTypeRegex()
 			if match, indexes := match(regex, source); match {
 				tokens = append(tokens, Token{
-					TokenType: tokenType,
-					Source:    source[indexes[0]:indexes[1]],
+					Type:   tokenType,
+					Source: source[indexes[0]:indexes[1]],
 				})
 				source = source[indexes[1]:]
 				found = true

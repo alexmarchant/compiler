@@ -1,41 +1,59 @@
 package parser
 
 import (
+	"fmt"
 	"errors"
+
 	"github.com/alexmarchant/compiler/lexer"
 )
 
 // Function is a function
 type Function struct {
 	Name       string
-	Statements []Statement
+	ReturnType ValueType
+	Statements []*Statement
 }
 
-func parseFunction(tokens []lexer.Token) (Function, error) {
+func parseFunction(tokens *[]lexer.Token) (*Function, error) {
 	function := Function{}
 
-	elements := []sequenceElement{
-		sequenceElement{tokenType: lexer.KeywordFunc, required: true},
-		sequenceElement{tokenType: lexer.Identifier, required: true},
-		sequenceElement{tokenType: lexer.OpeningParenthesis, required: true},
-		sequenceElement{tokenType: lexer.ClosingParenthesis, required: true},
-		sequenceElement{tokenType: lexer.LineBreak, required: false},
-		sequenceElement{tokenType: lexer.OpeningCurlyBrace, required: true},
-	}
-	functionDeclaration := sequence{elements: elements}
-	match, endIndex := functionDeclaration.match(tokens)
-	if !match {
-		return function, errors.New("Invalid function declaration")
+	tokensVal := *tokens
+
+	if tokensVal[0].Type != lexer.KeywordFunc ||
+		tokensVal[1].Type != lexer.Identifier ||
+		tokensVal[2].Type != lexer.OpeningParenthesis ||
+		tokensVal[3].Type != lexer.ClosingParenthesis {
+		return nil, errors.New("Invalid function declaration")
 	}
 
-	function.Name = tokens[1].Source
-	tokens = tokens[endIndex:]
-	
+	function.Name = tokensVal[1].Source
+
+	tokensVal = tokensVal[4:]
+	if tokensVal[0].Type == lexer.KeywordInt {
+		function.ReturnType = IntType
+	} else {
+		function.ReturnType = VoidType
+	}
+
+	tokensVal = tokensVal[1:]
+	if tokensVal[0].Type != lexer.OpeningCurlyBrace {
+		return nil, errors.New("Invalid function declaration")
+	}
+
+	tokensVal = tokensVal[1:]
+	*tokens = tokensVal
 	statement, err := parseStatement(tokens)
 	if err != nil {
-		return function, err
+		return nil, err
 	}
 	function.Statements = append(function.Statements, statement)
 
-	return function, nil
+	if tokensVal[0].Type != lexer.ClosingCurlyBrace {
+		fmt.Printf("end: %+v\n", tokensVal)
+		return nil, errors.New("Missing closing curly brace")
+	}
+
+	*tokens = tokensVal[1:]
+
+	return &function, nil
 }

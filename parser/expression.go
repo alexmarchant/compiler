@@ -2,36 +2,103 @@ package parser
 
 import (
 	"errors"
+	"strconv"
+
 	"github.com/alexmarchant/compiler/lexer"
 )
 
 // ExpressionType is an enum
-type ExpressionType int
+type ExpressionType string
 
 // Addition et all are expression types
 const (
-	Addition ExpressionType = iota
+	AdditionExpressionType ExpressionType = "AdditionExpressionType"
+	LiteralExpressionType  ExpressionType = "LiteralExpressionType"
 )
 
-// Expression is chunk of code
-type Expression struct {
-	Type ExpressionType
+// Expression ...
+type Expression interface {
+	Type() ExpressionType
 }
 
-func parseExpression(tokens []lexer.Token) (Expression, error) {
-	return parseAdditionExpression(tokens)
+// AdditionExpression ...
+type AdditionExpression struct {
+	Left  int
+	Right int
 }
 
-func parseAdditionExpression(tokens []lexer.Token) (Expression, error) {
-	elements := []sequenceElement{
-		sequenceElement{tokenType: lexer.IntegerLiteral, required: true},
-		sequenceElement{tokenType: lexer.PlusSign, required: true},
-		sequenceElement{tokenType: lexer.IntegerLiteral, required: true},
+// Type ...
+func (e *AdditionExpression) Type() ExpressionType {
+	return AdditionExpressionType
+}
+
+// LiteralExpressionValueType ...
+type LiteralExpressionValueType string
+
+// IntegerLiteralType ...
+const (
+	IntegerLiteralType LiteralExpressionValueType = "IntegerLiteralType"
+)
+
+// LiteralExpression ...
+type LiteralExpression struct {
+	Type           LiteralExpressionValueType
+	IntegerLiteral int
+}
+
+func parseExpression(tokens *[]lexer.Token) (*Expression, error) {
+	expression, _ := parseAdditionExpression(tokens)
+	if expression != nil {
+		return expression, nil
 	}
-	sequence := sequence{elements: elements}
-	match, _ := sequence.match(tokens)
-	if !match {
-		return Expression{}, errors.New("Invalid addition expression")
+
+	expression, _ = parseLiteralExpression(tokens)
+	if expression != nil {
+		return expression, nil
 	}
-	return Expression{Type: Addition}, nil
+
+	return nil, errors.New("Invalid expression")
+}
+
+func parseAdditionExpression(tokens *[]lexer.Token) (*Expression, error) {
+	tokensVal := *tokens
+	if tokensVal[0].Type != lexer.IntegerLiteral ||
+		tokensVal[1].Type != lexer.PlusSign ||
+		tokensVal[2].Type != lexer.IntegerLiteral {
+		return nil, errors.New("Invalid addition expression")
+	}
+
+	left, _ := strconv.Atoi(tokensVal[0].Source)
+	right, _ := strconv.Atoi(tokensVal[2].Source)
+	expression := AdditionExpression{Left: left, Right: right}
+
+	tokensVal = tokensVal[3:]
+	*tokens = tokensVal
+
+	return &Expression{
+		Type:               AdditionExpressionType,
+		AdditionExpression: &expression,
+	}, nil
+}
+
+func parseLiteralExpression(tokens *[]lexer.Token) (*Expression, error) {
+	tokensVal := *tokens
+	if tokensVal[0].Type != lexer.IntegerLiteral {
+		return nil, errors.New("Invalid literal expression")
+	}
+
+	value, _ := strconv.Atoi(tokensVal[0].Source)
+	literalExpression := LiteralExpression{
+		Type:           IntegerLiteralType,
+		IntegerLiteral: value,
+	}
+
+	tokensVal = tokensVal[1:]
+	*tokens = tokensVal
+
+	expression := Expression{
+		Type:              LiteralExpressionType,
+		LiteralExpression: &literalExpression,
+	}
+	return &expression, nil
 }
