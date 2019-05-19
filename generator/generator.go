@@ -6,93 +6,59 @@ import (
 	"github.com/alexmarchant/compiler/parser"
 )
 
-var varCount = 0
+var asm = ""
 
 // Generate ...
-func Generate(program *parser.Program) string {
-	ir := ""
-	generateProgram(program, &ir)
-	return ir
+func Generate(nodes []parser.Node) string {
+	for _, node := range nodes {
+		generateNode(node)
+	}
+
+	return asm
 }
 
-func generateProgram(program *parser.Program, ir *string) {
-	generateFunction(program.MainFunction, ir)
-}
-
-func generateFunction(function *parser.Function, ir *string) {
-	*ir += "define "
-	switch function.ReturnType {
-	case parser.IntType:
-		*ir += "i64 "
-	case parser.VoidType:
-		*ir += "void "
+func generateNode(node parser.Node) {
+	switch node.NodeType() {
+	case parser.NodeTypeFunction:
+		function := node.(*parser.Function)
+		generateFunction(function)
+	case parser.NodeTypeExpression:
+		expression := node.(parser.Expression)
+		generateExpression(expression)
 	default:
-		panic("Switch fallthrough")
-	}
-
-	*ir += fmt.Sprintf("@%s", function.Name)
-	*ir += "() {\n"
-	*ir += "entry:\n"
-
-	for _, statement := range function.Statements {
-		generateStatement(statement, ir)
-	}
-
-	*ir += "}\n"
-}
-
-func generateStatement(statement *parser.Statement, ir *string) {
-	*ir += "  "
-
-	switch statement.Type {
-	case parser.ReturnStatementType:
-		generateReturnStatement(statement.ReturnStatement, ir)
-	case parser.ExpressionStatementType:
-		generateExpressionStatement(statement.ExpressionStatement, ir)
-	default:
-		panic("Switch fallthrough")
+		panic("Invalid NodeType")
 	}
 }
 
-func generateReturnStatement(returnStatement *parser.ReturnStatement, ir *string) {
-	id := generateExpression(returnStatement.Expression, ir)
-	*ir += fmt.Sprintf("ret %s", id)
-}
+func generateFunction(function *parser.Function) {
+	asm += fmt.Sprintf("global\t%s\n\n", function.Name)
+	asm += fmt.Sprintf("%s:\n", function.Name)
 
-func generateExpressionStatement(expressionStatement *parser.ExpressionStatement, ir *string) string {
-	return generateExpression(expressionStatement.Expression, ir)
-}
+	// Function prologue (start new stack frame)
+	asm += "\tpush\t%rbp\n"
+	asm += "\tmov\t\t%rsp, %rbp\n"
 
-func generateExpression(expression *parser.Expression, ir *string) string {
-	switch expression.Type {
-	case parser.AdditionExpressionType:
-		return generateAdditionExpression(expression.AdditionExpression, ir)
-	case parser.LiteralExpressionType:
-		return generateLiteralExpression(expression.LiteralExpression, ir)
-	default:
-		panic("Switch fallthrough")
+	for _, expression := range function.Expressions {
+		generateExpression(expression)
 	}
-}
 
-func generateAdditionExpression(additionExpression *parser.AdditionExpression, ir *string) string {
-	id := nextID()
-	*ir += fmt.Sprintf("%s = add i64 %d %d", id, additionExpression.Left, additionExpression.Right)
-	return id
-}
-
-func generateLiteralExpression(literalExpression *parser.LiteralExpression, ir *string) string {
-	id := nextID()
-	switch literalExpression.Type {
-	case parser.IntegerLiteralType:
-		*ir += fmt.Sprintf("%s = %d", id, literalExpression.IntegerLiteral)
-	default:
-		panic("Switch fallthrough")
+	if function.ReturnType == nil {
+		asm += "\tmov\t\t0, %rax\n"
 	}
-	return id
+
+	// Function epilogue
+	asm += "\tmov\t\t%rbp, %rsp\n"
+	asm += "\tpop\t\t%rbp\n"
+	asm += "\tret\n"
 }
 
-func nextID() string {
-	id := fmt.Sprintf("\\%%d", varCount)
-	varCount++
-	return id
+func generateExpression(expression parser.Expression) {
+	switch expression.ExpressionType() {
+	case parser.ExpressionTypeInt:
+		intExpression := expression.(*parser.IntExpression)
+		asm += fmt.Sprintf("\tmov\t\t%d, %%rax\n", intExpression.Value)
+	case parser.ExpressionTypeReturn:
+		retExpression := expression.(*parser.ReturnExpression)
+		generateExpression(retExpression.Expression)
+	}
 }

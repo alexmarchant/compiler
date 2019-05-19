@@ -1,13 +1,14 @@
 package main
 
 import (
+	"fmt"
 	"io/ioutil"
 	"os"
-	"fmt"
+	"os/exec"
 
+	"github.com/alexmarchant/compiler/generator"
 	"github.com/alexmarchant/compiler/lexer"
 	"github.com/alexmarchant/compiler/parser"
-	"github.com/alexmarchant/compiler/generator"
 	"github.com/sanity-io/litter"
 )
 
@@ -26,12 +27,24 @@ func main() {
 	tokens := lexer.Lex(source)
 	// litter.Dump(tokens)
 
-	program, err := parser.Parse(tokens)
+	fmt.Println("--AST--")
+	nodes := parser.Parse(tokens)
+	litter.Dump(nodes)
+
+	fmt.Println("\n--ASM--")
+	asm := generator.Generate(nodes)
+	fmt.Print(asm)
+
+	// Generate binary
+	ioutil.WriteFile("./out.asm", []byte(asm), 0644)
+	cmd := exec.Command("sh", "-c", "nasm -f macho64 out.asm")
+	err = cmd.Run()
 	if err != nil {
 		panic(err)
 	}
-	litter.Dump(program)
-
-	ir := generator.Generate(program)
-	fmt.Print(ir)
+	cmd = exec.Command("sh", "-c", "ld -macosx_version_min 10.7.0 -lSystem -o out out.o")
+	err = cmd.Run()
+	if err != nil {
+		panic(err)
+	}
 }

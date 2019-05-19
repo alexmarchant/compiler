@@ -21,6 +21,7 @@ const (
 	ClosingCurlyBrace TokenType = "ClosingCurlyBrace"
 	LineBreak         TokenType = "LineBreak"
 	PlusSign          TokenType = "PlusSign"
+	EOF               TokenType = "EOF"
 )
 
 func (t TokenType) tokenTypeRegex() string {
@@ -84,6 +85,7 @@ func parseTokens(source string) []Token {
 		PlusSign,
 		IntegerLiteral,
 		Identifier,
+		EOF,
 	}
 
 	for len(source) > 0 {
@@ -107,6 +109,11 @@ func parseTokens(source string) []Token {
 			panic("Can't find next token")
 		}
 	}
+
+	tokens = append(tokens, Token{
+		Type:   EOF,
+		Source: "",
+	})
 
 	return tokens
 }
