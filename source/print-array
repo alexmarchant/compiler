@@ -1,0 +1,8 @@
+fn array() IntArray {
+    return [1, 2, 3]
+}
+
+fn main() Int {
+    int_array_print(array())
+    return 0
+}

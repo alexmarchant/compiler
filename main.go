@@ -1,6 +1,7 @@
 package main
 
 import (
+	"bytes"
 	"fmt"
 	"io/ioutil"
 	"os"
@@ -25,26 +26,28 @@ func main() {
 
 	source := string(dat)
 	tokens := lexer.Lex(source)
-	// litter.Dump(tokens)
+	litter.Dump(tokens)
 
 	fmt.Println("--AST--")
 	nodes := parser.Parse(tokens)
 	litter.Dump(nodes)
 
-	fmt.Println("\n--ASM--")
-	asm := generator.Generate(nodes)
-	fmt.Print(asm)
+	fmt.Println("\n--CODE--")
+	code := generator.Generate(nodes)
+	fmt.Print(code)
 
 	// Generate binary
-	ioutil.WriteFile("./out.asm", []byte(asm), 0644)
-	cmd := exec.Command("sh", "-c", "nasm -f macho64 out.asm")
+	ioutil.WriteFile("./out.c", []byte(code), 0644)
+	cmd := exec.Command("sh", "-c", "clang out.c runtime/*.c -o out")
+	var errLog bytes.Buffer
+	cmd.Stderr = &errLog
 	err = cmd.Run()
+	if len(errLog.String()) > 0 {
+		fmt.Println("\n--COMPILATION--")
+		fmt.Printf(errLog.String())
+	}
 	if err != nil {
 		panic(err)
 	}
-	cmd = exec.Command("sh", "-c", "ld -macosx_version_min 10.7.0 -lSystem -o out out.o")
-	err = cmd.Run()
-	if err != nil {
-		panic(err)
-	}
+	os.Remove("out.c")
 }

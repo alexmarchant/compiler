@@ -1,6 +1,7 @@
 package lexer
 
 import (
+	"fmt"
 	"regexp"
 	"strings"
 )
@@ -10,32 +11,56 @@ type TokenType string
 
 // KeywordFun et all are TokenTypes
 const (
-	KeywordFunc       TokenType = "KeywordFunc"
-	KeywordReturn     TokenType = "KeywordReturn"
-	KeywordInt        TokenType = "KeywordInt"
-	Identifier        TokenType = "Identifier"
-	IntegerLiteral    TokenType = "IntegerLiteral"
-	OpeningParen      TokenType = "OpeningParen"
-	ClosingParen      TokenType = "ClosingParen"
-	OpeningCurlyBrace TokenType = "OpeningCurlyBrace"
-	ClosingCurlyBrace TokenType = "ClosingCurlyBrace"
-	LineBreak         TokenType = "LineBreak"
-	PlusSign          TokenType = "PlusSign"
-	EOF               TokenType = "EOF"
+	KeywordFn          TokenType = "KeywordFn"
+	KeywordReturn      TokenType = "KeywordReturn"
+	KeywordVar         TokenType = "KeywordVar"
+	KeywordInt         TokenType = "KeywordInt"
+	KeywordIntArray    TokenType = "KeywordIntArray"
+	KeywordString      TokenType = "KeywordString"
+	Identifier         TokenType = "Identifier"
+	IntegerLiteral     TokenType = "IntegerLiteral"
+	StringLiteral      TokenType = "StringLiteral"
+	Colon              TokenType = "Colon"
+	Equals             TokenType = "Equals"
+	OpeningParen       TokenType = "OpeningParen"
+	ClosingParen       TokenType = "ClosingParen"
+	OpeningCurlyBrace  TokenType = "OpeningCurlyBrace"
+	ClosingCurlyBrace  TokenType = "ClosingCurlyBrace"
+	LineBreak          TokenType = "LineBreak"
+	PlusSign           TokenType = "PlusSign"
+	MinusSign          TokenType = "MinusSign"
+	MultiplicationSign TokenType = "MultiplicationSign"
+	DivisionSign       TokenType = "DivisionSign"
+	EOF                TokenType = "EOF"
+	Comma              TokenType = "Comma"
+	OpeningBracket     TokenType = "OpeningBracket"
+	ClosingBracket     TokenType = "ClosingBracket"
 )
 
 func (t TokenType) tokenTypeRegex() string {
 	switch t {
-	case KeywordFunc:
-		return "^func"
+	case KeywordFn:
+		return "^fn"
 	case KeywordReturn:
 		return "^return"
+	case KeywordVar:
+		return "^var"
 	case KeywordInt:
-		return "^int"
+		return "^Int"
+	case KeywordIntArray:
+		return "^IntArray"
+	case KeywordString:
+		return "^String"
 	case Identifier:
-		return "^[a-zA-Z]+"
+		return "^[a-zA-Z_]+"
 	case IntegerLiteral:
 		return "^\\d+"
+	case StringLiteral:
+		return "^\"(.*?)\""
+	case Colon:
+		return "^:"
+	case Equals:
+		return "^="
 	case OpeningParen:
 		return "^\\("
 	case ClosingParen:
@@ -48,8 +73,21 @@ func (t TokenType) tokenTypeRegex() string {
 		return "^\n"
 	case PlusSign:
 		return "^\\+"
+	case MinusSign:
+		return "^\\-"
+	case MultiplicationSign:
+		return "^\\*"
+	case DivisionSign:
+		return "^\\/"
+	case Comma:
+		return "^,"
+	case OpeningBracket:
+		return "^\\["
+	case ClosingBracket:
+		return "^\\]"
 	default:
-		panic("Switch fallthrough")
+		msg := fmt.Sprintf("Unrecognized token: %s", t)
+		panic(msg)
 	}
 }
 
@@ -59,37 +97,42 @@ type Token struct {
 	Source string
 }
 
-func match(regexString string, source string) (bool, []int) {
-	r, _ := regexp.Compile(regexString)
-	match := r.MatchString(source)
-	if match {
-		indexes := r.FindStringIndex(source)
-		return true, indexes
-	} else {
-		return false, []int{}
-	}
+// Lex returns tokens
+func Lex(source string) []Token {
+	return parseTokens(source)
 }
 
 func parseTokens(source string) []Token {
 	source = strings.Trim(source, " ")
 	tokens := []Token{}
 	tokenTypes := []TokenType{
-		KeywordFunc,
+		KeywordFn,
 		KeywordReturn,
+		KeywordVar,
+		KeywordIntArray,
 		KeywordInt,
+		KeywordString,
+		Colon,
+		Equals,
 		OpeningParen,
 		ClosingParen,
 		OpeningCurlyBrace,
 		ClosingCurlyBrace,
 		LineBreak,
 		PlusSign,
+		MinusSign,
+		MultiplicationSign,
+		DivisionSign,
 		IntegerLiteral,
+		StringLiteral,
 		Identifier,
-		EOF,
+		Comma,
+		OpeningBracket,
+		ClosingBracket,
 	}
 
 	for len(source) > 0 {
-		source = strings.Trim(source, " ")
+		source = strings.Trim(source, " \t")
 		found := false
 
 		for _, tokenType := range tokenTypes {
@@ -106,7 +149,8 @@ func parseTokens(source string) []Token {
 		}
 
 		if !found {
-			panic("Can't find next token")
+			msg := fmt.Sprintf("Next token not recognized: %s", source)
+			panic(msg)
 		}
 	}
 
@@ -118,7 +162,13 @@ func parseTokens(source string) []Token {
 	return tokens
 }
 
-// Lex returns tokens
-func Lex(source string) []Token {
-	return parseTokens(source)
+func match(regexString string, source string) (bool, []int) {
+	r, _ := regexp.Compile(regexString)
+	match := r.MatchString(source)
+	if match {
+		indexes := r.FindStringIndex(source)
+		return true, indexes
+	} else {
+		return false, []int{}
+	}
 }

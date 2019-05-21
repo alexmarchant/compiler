@@ -1,0 +1,7 @@
+fn main() {
+    var a: Int = 1
+    var b: Int = 2
+    var c: Int = a + b
+
+    var name: String = "Alex"
+}

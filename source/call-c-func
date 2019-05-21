@@ -1,0 +1,3 @@
+fn main() {
+    callCFunc("printf", "%s\n", "Hello World!")
+}

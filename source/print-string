@@ -1,0 +1,8 @@
+fn message() String {
+    return "Hello, World!"
+}
+
+fn main() Int {
+    char_array_print(message())
+    return 0
+}

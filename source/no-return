@@ -1,0 +1,7 @@
+fn math() {
+    1 + 1
+}
+
+fn main() {
+    math()
+}
