@@ -46,8 +46,10 @@ const (
 	ExpressionTypeBinary             ExpressionType = "ExpressionTypeBinary"
 	ExpressionTypeCall               ExpressionType = "ExpressionTypeCall"
 	ExpressionTypeParen              ExpressionType = "ExpressionTypeParen"
+	ExpressionTypeVariableDeclaration ExpressionType = "ExpressionTypeVariableDeclaration"
 	ExpressionTypeVariableAssignment ExpressionType = "ExpressionTypeVariableAssignment"
 	ExpressionTypeVariable           ExpressionType = "ExpressionTypeVariable"
+	ExpressionTypeAccessor           ExpressionType = "ExpressionTypeAccessor"
 )
 
 // Expression ...
@@ -128,7 +130,7 @@ func (e *ParenExpression) ExpressionType() ExpressionType {
 	return ExpressionTypeParen
 }
 
-// AssignmentExpression ...
+// VariableExpression ...
 type VariableExpression struct {
 	Name string
 }
@@ -138,16 +140,38 @@ func (e *VariableExpression) ExpressionType() ExpressionType {
 	return ExpressionTypeVariable
 }
 
-// AssignmentExpression ...
+// VariableDeclarationExpression ...
+type VariableDeclarationExpression struct {
+	Name       string
+	Type       string
+	Expression Expression
+}
+
+// ExpressionType ...
+func (e *VariableDeclarationExpression) ExpressionType() ExpressionType {
+	return ExpressionTypeVariableDeclaration
+}
+
+// VariableAssignmentExpression ...
 type VariableAssignmentExpression struct {
 	Name       string
-	Type       ValueType
 	Expression Expression
 }
 
 // ExpressionType ...
 func (e *VariableAssignmentExpression) ExpressionType() ExpressionType {
 	return ExpressionTypeVariableAssignment
+}
+
+// AccessorExpression ...
+type AccessorExpression struct {
+	Target string
+	Expression Expression
+}
+
+// ExpressionType ...
+func (e *AccessorExpression) ExpressionType() ExpressionType {
+	return ExpressionTypeAccessor
 }
 
 func parseExpression() Expression {
@@ -166,7 +190,7 @@ func parsePrimaryExpression() Expression {
 	case tokens[index].Type == lexer.KeywordReturn:
 		return parseReturnExpression()
 	case tokens[index].Type == lexer.KeywordVar:
-		return parseAssignmentExpression()
+		return parseVariableDeclarationExpression()
 	case tokens[index].Type == lexer.OpeningParen:
 		return parseParenExpression()
 	case tokens[index].Type == lexer.Identifier:
@@ -293,33 +317,52 @@ func parseReturnExpression() *ReturnExpression {
 	return &ReturnExpression{Expression: parseExpression()}
 }
 
-func parseAssignmentExpression() *VariableAssignmentExpression {
-	exp := &VariableAssignmentExpression{}
+func parseVariableDeclarationExpression() *VariableDeclarationExpression {
+	exp := &VariableDeclarationExpression{}
 
 	if tokens[index].Type != lexer.KeywordVar {
-		panic("Invalid assignment expression")
+		panic("Invalid declaration expression")
 	}
 	index++
 
 	if tokens[index].Type != lexer.Identifier {
-		panic("Invalid assignment expression")
+		panic("Invalid declaration expression")
 	}
 	exp.Name = tokens[index].Source
 	index++
 
 	if tokens[index].Type != lexer.Colon {
-		panic("Invalid assignment expression")
+		panic("Invalid declaration expression")
 	}
 	index++
 
-	expType := parseValueType()
-	if expType == nil {
-		panic("Invalid assignment expression")
+	expType, err := parseValueType()
+	if err != nil {
+		panic("Invalid declaration expression")
 	}
-	exp.Type = *expType
+	exp.Type = expType
 
 	if tokens[index].Type != lexer.Equals {
-		panic("Invalid assignment expression")
+		panic("Invalid declaration expression")
+	}
+	index++
+
+	exp.Expression = parseExpression()
+
+	return exp
+}
+
+func parseVariableAssignmentExpression() *VariableAssignmentExpression {
+	exp := &VariableAssignmentExpression{}
+
+	if tokens[index].Type != lexer.Identifier {
+		panic("Invalid declaration expression")
+	}
+	exp.Name = tokens[index].Source
+	index++
+
+	if tokens[index].Type != lexer.Equals {
+		panic("Invalid declaration expression")
 	}
 	index++
 
@@ -346,6 +389,10 @@ func parseParenExpression() Expression {
 func parseIdentifierExpression() Expression {
 	if tokens[index+1].Type == lexer.OpeningParen {
 		return parseCallExpression()
+	} else if tokens[index+1].Type == lexer.Period {
+		return parseAccessorExpression()
+	} else if tokens[index+1].Type == lexer.Equals {
+		return parseVariableAssignmentExpression()
 	} else {
 		name := tokens[index].Source
 		index++
@@ -388,4 +435,23 @@ func parseCallExpression() *CallExpression {
 		Callee: name,
 		Params: expressions,
 	}
+}
+
+func parseAccessorExpression() *AccessorExpression {
+	exp := &AccessorExpression{}
+
+	if tokens[index].Type != lexer.Identifier {
+		panic("Invalid accessor expression")
+	}
+	exp.Target = tokens[index].Source
+	index++
+
+	if tokens[index].Type != lexer.Period {
+		panic("Invalid accessor expression")
+	}
+	index++
+
+	exp.Expression = parseExpression()
+
+	return exp
 }

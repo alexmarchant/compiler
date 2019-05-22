@@ -7,19 +7,13 @@ import (
 // Struct ...
 type Struct struct {
 	Name      string
-	Props     []*StructProp
+	Props     []*Prop
 	Functions []*Function
 }
 
 // NodeType ...
 func (f *Struct) NodeType() NodeType {
 	return NodeTypeStruct
-}
-
-// StructProp ...
-type StructProp struct {
-	Name string
-	Type ValueType
 }
 
 func parseStruct() *Struct {
@@ -60,33 +54,11 @@ func parseStruct() *Struct {
 		case lexer.Identifier:
 			str.Props = append(
 				str.Props,
-				parseStructProp())
+				parseProp())
 		default:
 			panic("Invalid struct")
 		}
 	}
 
 	return str
-}
-
-func parseStructProp() *StructProp {
-	prop := &StructProp{}
-	if tokens[index].Type != lexer.Identifier {
-		panic("Struct prop missing name")
-	}
-	prop.Name = tokens[index].Source
-	index++
-
-	if tokens[index].Type != lexer.Colon {
-		panic("Struct prop missing colon")
-	}
-	index++
-
-	valueType := parseValueType()
-	if valueType == nil {
-		panic("Struct prop has invalid type")
-	}
-	prop.Type = *valueType
-
-	return prop
 }

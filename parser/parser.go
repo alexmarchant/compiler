@@ -2,6 +2,7 @@ package parser
 
 import (
 	"fmt"
+	"errors"
 
 	"github.com/alexmarchant/compiler/lexer"
 )
@@ -20,15 +21,11 @@ type Node interface {
 	NodeType() NodeType
 }
 
-// ValueType ...
-type ValueType string
-
-// ValueTypeInt ...
-const (
-	ValueTypeInt      ValueType = "ValueTypeInt"
-	ValueTypeString   ValueType = "ValueTypeString"
-	ValueTypeIntArray ValueType = "ValueTypeIntArray"
-)
+// Prop ...
+type Prop struct {
+	Name string
+	Type string
+}
 
 var tokens []lexer.Token
 var index int
@@ -63,23 +60,42 @@ func Parse(someTokens []lexer.Token) []Node {
 	}
 }
 
-func parseValueType() *ValueType {
+func parseValueType() (string, error) {
 	token := tokens[index]
 
 	switch token.Type {
 	case lexer.KeywordInt:
 		index++
-		value := ValueTypeInt
-		return &value
+		return "int", nil
 	case lexer.KeywordString:
 		index++
-		value := ValueTypeString
-		return &value
-	case lexer.KeywordIntArray:
+		return "String*", nil
+	case lexer.Identifier:
 		index++
-		value := ValueTypeIntArray
-		return &value
+		return token.Source, nil
 	default:
-		return nil
+		return "", errors.New("Invalid value type")
 	}
+}
+
+func parseProp() *Prop {
+	prop := &Prop{}
+	if tokens[index].Type != lexer.Identifier {
+		panic("Struct prop missing name")
+	}
+	prop.Name = tokens[index].Source
+	index++
+
+	if tokens[index].Type != lexer.Colon {
+		panic("Struct prop missing colon")
+	}
+	index++
+
+	valueType, err := parseValueType()
+	if err != nil {
+		panic("Struct prop has invalid type")
+	}
+	prop.Type = valueType
+
+	return prop
 }

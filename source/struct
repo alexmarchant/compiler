@@ -6,5 +6,33 @@ struct Person {
     }
 }
 
-fn main() {
+struct Point {
+    x: Int
+    y: Int
+}
+
+struct Square {
+    width: Int
+    height: Int
+
+    fn area() Int {
+        return self.width * self.height
+    }
+}
+
+fn main() Int {
+    var person: Person = Person()
+    person.name = "Alex"
+    println("name:", person)
+
+    var square: Square = Square()
+    square.width = 5
+    square.height = 5
+    var area: Int = square.area()
+    println("area:", area)
+
+    var msg: String = "Hello, World!"
+    println(msg)
+
+    return 0
 }

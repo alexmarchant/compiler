@@ -1,11 +1,9 @@
 package main
 
 import (
-	"bytes"
 	"fmt"
 	"io/ioutil"
 	"os"
-	"os/exec"
 
 	"github.com/alexmarchant/compiler/generator"
 	"github.com/alexmarchant/compiler/lexer"
@@ -33,21 +31,7 @@ func main() {
 	litter.Dump(nodes)
 
 	fmt.Println("\n--CODE--")
-	code := generator.Generate(nodes)
+	code := generator.GenerateC(nodes)
 	fmt.Print(code)
-
-	// Generate binary
-	ioutil.WriteFile("./out.c", []byte(code), 0644)
-	cmd := exec.Command("sh", "-c", "clang out.c runtime/*.c -o out")
-	var errLog bytes.Buffer
-	cmd.Stderr = &errLog
-	err = cmd.Run()
-	if len(errLog.String()) > 0 {
-		fmt.Println("\n--COMPILATION--")
-		fmt.Printf(errLog.String())
-	}
-	if err != nil {
-		panic(err)
-	}
-	os.Remove("out.c")
+	generator.CompileC()
 }

@@ -5,7 +5,8 @@ import "github.com/alexmarchant/compiler/lexer"
 // Prototype ...
 type Prototype struct {
 	Name       string
-	ReturnType *ValueType
+	Props []*Prop
+	ReturnType string
 }
 
 // Function ...
@@ -38,12 +39,27 @@ func parsePrototype() *Prototype {
 	}
 	index++
 
-	if tokens[index].Type != lexer.ClosingParen {
-		panic("Function declaration missing closing paren")
-	}
-	index++
+	for {
+		if tokens[index].Type == lexer.ClosingParen {
+			index++
+			break
+		}
 
-	prototype.ReturnType = parseValueType()
+		if tokens[index].Type == lexer.Comma {
+			index++
+			continue
+		}
+
+		prototype.Props = append(prototype.Props, parseProp())
+	}
+
+
+	returnType, err := parseValueType()
+	if err != nil {
+		prototype.ReturnType = "void"
+	} else {
+		prototype.ReturnType = returnType
+	}
 
 	return prototype
 }

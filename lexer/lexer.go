@@ -21,6 +21,7 @@ const (
 	Identifier         TokenType = "Identifier"
 	IntegerLiteral     TokenType = "IntegerLiteral"
 	StringLiteral      TokenType = "StringLiteral"
+	Period             TokenType = "Period"
 	Colon              TokenType = "Colon"
 	Equals             TokenType = "Equals"
 	OpeningParen       TokenType = "OpeningParen"
@@ -60,6 +61,8 @@ func (t TokenType) tokenTypeRegex() string {
 		return "^\\d+"
 	case StringLiteral:
 		return "^\"(.*?)\""
+	case Period:
+		return "^\\."
 	case Colon:
 		return "^:"
 	case Equals:
@@ -116,6 +119,7 @@ func parseTokens(source string) []Token {
 		KeywordIntArray,
 		KeywordInt,
 		KeywordString,
+		Period,
 		Colon,
 		Equals,
 		OpeningParen,
