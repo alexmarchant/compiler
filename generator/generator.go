@@ -25,6 +25,9 @@ func generateNode(node parser.Node) string {
 	case parser.NodeTypeFunction:
 		function := node.(*parser.Function)
 		return generateFunction(function)
+	case parser.NodeTypeStruct:
+		str := node.(*parser.Struct)
+		return generateStruct(str)
 	default:
 		panic("Invalid NodeType")
 	}
@@ -70,6 +73,15 @@ func generateFunction(function *parser.Function) string {
 	code += body
 	code += "}\n\n"
 
+	return code
+}
+
+func generateStruct(str *parser.Struct) string {
+	code := fmt.Sprintf("typedef struct _%s {\n", str.Name)
+	for _, prop := range str.Props {
+		code += fmt.Sprintf("\t%s %s;\n", cValueType(prop.Type), prop.Name)
+	}
+	code += fmt.Sprintf("} %s;\n\n", str.Name)
 	return code
 }
 

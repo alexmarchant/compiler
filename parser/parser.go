@@ -1,6 +1,8 @@
 package parser
 
 import (
+	"fmt"
+
 	"github.com/alexmarchant/compiler/lexer"
 )
 
@@ -10,6 +12,7 @@ type NodeType string
 // NodeTypeFunction ...
 const (
 	NodeTypeFunction NodeType = "NodeTypeFunction"
+	NodeTypeStruct   NodeType = "NodeTypeStruct"
 )
 
 // Node ...
@@ -49,8 +52,13 @@ func Parse(someTokens []lexer.Token) []Node {
 			nodes = append(
 				nodes,
 				parseFunction())
+		case token.Type == lexer.KeywordStruct:
+			nodes = append(
+				nodes,
+				parseStruct())
 		default:
-			panic("Fallthrough")
+			msg := fmt.Sprintf("Don't know how to parse: %v", token)
+			panic(msg)
 		}
 	}
 }

@@ -14,6 +14,7 @@ const (
 	KeywordFn          TokenType = "KeywordFn"
 	KeywordReturn      TokenType = "KeywordReturn"
 	KeywordVar         TokenType = "KeywordVar"
+	KeywordStruct      TokenType = "KeywordStruct"
 	KeywordInt         TokenType = "KeywordInt"
 	KeywordIntArray    TokenType = "KeywordIntArray"
 	KeywordString      TokenType = "KeywordString"
@@ -45,6 +46,8 @@ func (t TokenType) tokenTypeRegex() string {
 		return "^return"
 	case KeywordVar:
 		return "^var"
+	case KeywordStruct:
+		return "^struct"
 	case KeywordInt:
 		return "^Int"
 	case KeywordIntArray:
@@ -109,6 +112,7 @@ func parseTokens(source string) []Token {
 		KeywordFn,
 		KeywordReturn,
 		KeywordVar,
+		KeywordStruct,
 		KeywordIntArray,
 		KeywordInt,
 		KeywordString,

@@ -1,0 +1,10 @@
+struct Person {
+    name: String
+
+    fn toString() String {
+        return self.name
+    }
+}
+
+fn main() {
+}

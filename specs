@@ -1,0 +1,104 @@
+// -- Enums
+enum Gender {
+    Male
+    Female
+}
+enum Siblings {
+    Alex
+    Lizzie
+    Abby
+
+    fn gender() Gender {
+        switch self {
+        case Alex:
+            return Gender.Male
+        case Lizzie:
+            return Gender.Female
+        case Abby
+            return Gender.Female
+        }
+    }
+}
+Siblings.Alex.gender()
+// => Gender.Male
+
+// Enums can hold values
+// Need generics for that probs
+enum Option<T> {
+    Some(val: T)
+    None
+}
+const name = Option<Int>.Some(1)
+switch name {
+case Some(val: Int):
+    print(int: val)
+default:
+    print(string: "None")
+}
+// => 1
+
+// -- Structs
+struct Person {
+    firstName: String = "Alex" // Default value
+    lastName = "Marchant" // Default value without type
+
+    fn fullName() String {
+        return firstName + lastName
+    }
+}
+const person = Person{firstName: "Abby"}
+print(string: person.fullName())
+// => "Abby Marchant"
+
+
+// -- Protocols
+protocol Printable {
+    fn toString() String
+}
+
+print(printable: Printable) {
+    print(string: printable.toString())
+}
+
+struct City: Printable {
+    name: String
+
+    fn toString() String {
+        return "<City name: \"${self.name}>\""
+    }
+}
+
+const city = City{name: "New York City"}
+print(city)
+// => <City name: "New York City">
+
+// Protocols do properties as well
+enum ShapeType {
+    Circle
+    Square
+}
+
+protocol Shape {
+    type: ShapeType
+}
+
+struct Circle: Shape {
+    type = ShapeType.Circle
+}
+
+struct Square: Shape {
+    type: ShapeType.Square
+}
+
+fn printShapeType(shape: Shape) {
+    switch shape.type {
+    case Circle:
+        printString("Circle")
+    case Square:
+        printString("Square")
+    }
+}
+printShapeType(shape: Circle{})
+// => "Circle"
+printShapeType(shape: Square{})
+// => "Square"
